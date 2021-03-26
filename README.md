@@ -20,7 +20,7 @@ codigo em JS.
     for (let i=result; buffer[i]; i++) {
         resultText += String.fromCharCode(buffer[i]);
     }
-        log(resultText);
+    log(resultText);
 
 Outro exemplo comparametro.
 
@@ -31,6 +31,7 @@ codigo em C.
     }
 
 codigo em JS.
+
     var wasmModule = new WebAssembly.Module(wasmCode);
     var wasmInstance = new WebAssembly.Instance(wasmModule, wasmImports);
     let buffer = new Uint8Array(wasmInstance.exports.memory.buffer); 
