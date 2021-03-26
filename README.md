@@ -22,6 +22,8 @@ codigo em JS.
     }
     log(resultText);
 
+O retorno de cadeia de caracteres não excede 16 unidades.
+
 Outro exemplo comparametro.
 
 codigo em C.
@@ -39,3 +41,10 @@ codigo em JS.
     var number2=2;
     let result = wasmInstance.exports.sum(number1,number2);
     log(result);
+
+
+A passagem de parametro somente consegui variavel por variável, sem vetor, sem array ou tipos de dados mais complexos.
+
+Além disso durante o processo de desenvolvimento quando aumentava-se a quantidade de funções gerava um erro:
+
+“Uncaught RangeError: WebAssembly.Compile is disallowed on the main thread, if the buffer size is larger than 4KB. Use WebAssembly.compile, or compile on a worker thread.”
