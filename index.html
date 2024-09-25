@@ -1,0 +1,1243 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Algoritimo genetico IA</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+html, body {
+  height: 100%;
+  overflow: hidden;
+  background: radial-gradient(circle, white, rgba(0, 0, 0, 0.5));
+  background-color: #2F2F31;
+  background-blend-mode: overlay;
+  padding:0 0 0 0;
+  margin:0 0 0 0;
+}
+
+button{
+	padding: 0 0 0 0;
+}
+.actions {
+  width:  100%;
+  height: 50px;
+  display:block;
+  text-align: center;
+  clear:both;
+}
+
+.text {
+  text-align: center;
+  font-family: Helvetica;
+  font-size: .8rem;
+  color: grey;
+  pointer-events: none;
+}
+
+.centered, .cube > .piece > .element > .sticker {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  margin: auto;
+}
+
+.scene {
+  width: 100%;
+  height: 100%;
+  perspective: 1200px;
+  transform-style: preserve-3d;
+}
+.scene > .pivot {
+  width: 0;
+  height: 0;
+  transition: .18s;
+  margin-top:200px;
+}
+.scene .anchor {
+  width: 2em;
+  height: 6em;
+}
+.scene div {
+  position: absolute;
+  transform-style: inherit;
+}
+
+#piece4 > .element.top > .sticker {
+  background: #DDD;
+  background-size: cover;
+}
+
+.cube {
+  font-size: 190%;
+  margin-left: -1em;
+  margin-top: -1em;
+}
+.cube > .piece {
+  width: 1.9em;
+  height: 1.9em;
+}
+.cube > .piece > .element {
+  width: 100%;
+  height: 100%;
+  background: #0A0A0A;
+  outline: 1px solid transparent;
+  border: 0.05em solid #0A0A0A;
+  border-radius: 10%;
+}
+.cube > .piece > .element.left {
+  transform: rotateX(0deg) rotateY(-90deg) rotateZ(180deg) translateZ(1em);
+}
+.cube > .piece > .element.right {
+  transform: rotateX(0deg) rotateY(90deg) rotateZ(90deg) translateZ(1em);
+}
+.cube > .piece > .element.back {
+  transform: rotateX(0deg) rotateY(180deg) rotateZ(-90deg) translateZ(1em);
+}
+.cube > .piece > .element.front {
+  transform: rotateX(0deg) rotateY(0deg) rotateZ(0deg) translateZ(1em);
+}
+.cube > .piece > .element.bottom {
+  transform: rotateX(-90deg) rotateY(0deg) rotateZ(-90deg) translateZ(1em);
+}
+.cube > .piece > .element.top {
+  transform: rotateX(90deg) rotateY(0deg) rotateZ(180deg) translateZ(1em);
+}
+.cube > .piece > .element > .sticker {
+  transform: translateZ(2px);
+  width: 95%;
+  height: 95%;
+  border-radius: 10%;
+  outline: 1px solid transparent;
+  box-shadow: inset 0.05em 0.05em 0.2rem 0 rgba(255, 255, 255, 0.25), inset -0.05em -0.05em 0.2rem 0 rgba(0, 0, 0, 0.25);
+}
+.cube > .piece > .element > .sticker.blue {
+  background-color: #001ca8;
+}
+.cube > .piece > .element > .sticker.green {
+  background-color: #006E16;
+}
+.cube > .piece > .element > .sticker.white {
+  background-color: #DDD;
+}
+.cube > .piece > .element > .sticker.yellow {
+  background-color: #E0AE00;
+}
+.cube > .piece > .element > .sticker.orange {
+  background-color: #FF5000;
+}
+.cube > .piece > .element > .sticker.red {
+  background-color: #DF0500;
+}
+#config{
+	background-color:#FEFEFE;
+	color:#666666;
+	display:none;
+	position:absolute;
+	width:100%;
+	height:100%;
+	margin-left:auto;
+	margin-right:auto;
+	z-index:3000;
+	margin: 0 0 0 0;
+}
+</style>
+<script>
+  if (document.location.search.match(/type=embed/gi)) {
+    window.parent.postMessage("resize", "*");
+  }
+</script>
+</head>
+<body translate="no">
+<div id="config">
+	<div style="width:200px;margin-left:auto;margin-right:auto;">
+		<p style="height:40px;">
+		<button style="width:40px;float:right;margin-right:10px;
+			height:40px;
+			border-radius:         10px 10px 10px 10px;
+			-moz-border-radius:    10px 10px 10px 10px;
+			-webkit-border-radius: 10px 10px 10px 10px;
+			border: 0px solid #000000;
+			" onclick="configClose()"><b>&Chi;</b></button>
+		</p>
+		<p>
+		Populacao Inicial: <label id="population_first_text">50</label><br>
+		<input type="range"  style="width:200px" name="population_first" min="2" max="100" value="50" onmousemove="document.getElementById('population_first_text').innerHTML=this.value;" ontouchmove="document.getElementById('population_first_text').innerHTML=this.value;">
+		</p>
+		<p>
+		Quantide de comossomos (movimentos): <label id="comosomes_text">20</label><br>
+		<input type="range"  style="width:200px" name="comosomes" min="1" max="60" value="20" onmousemove="document.getElementById('comosomes_text').innerHTML=this.value;" ontouchmove="document.getElementById('comosomes_text').innerHTML=this.value;">
+		</p>
+		<p>
+		Porcentagem Cruzamento: <label id="cross_over_text">60</label>%<br>
+		<input type="range"  style="width:200px" name="cross_over" min="1" max="100" value="60" onmousemove="document.getElementById('cross_over_text').innerHTML=this.value;" ontouchmove="document.getElementById('cross_over_text').innerHTML=this.value;">
+		</p>
+		<p>
+		Porcentagem Mutação: <label id="mutation_text">3</label>%<br>
+		<input type="range"  style="width:200px" name="mutation" min="1" max="100" value="3" onmousemove="document.getElementById('mutation_text').innerHTML=this.value;" ontouchmove="document.getElementById('mutation_text').innerHTML=this.value;">
+		</p>
+		<p>
+		Numero máximo Gerações: <input type="text" id="generation_text" onblur="document.getElementById('generation').value=this.value;"value="1000"><br>
+		<input type="range" style="width:200px" id="generation" name="generation" min="1" max="10000" value="1000" onmousemove="document.getElementById('generation_text').value=this.value;" ontouchmove="document.getElementById('generation_text').value=this.value;">
+		</p>
+	</div>
+</div>
+<div class="scene" id="scene">
+<div class="pivot centered" id="pivot" style="transform: rotateX(-45deg) rotateY(-45deg);">
+<div class="cube" id="cube">
+<div class="piece">
+<div class="element left"></div>
+<div class="element right"></div>
+<div class="element top"></div>
+<div class="element bottom"></div>
+<div class="element back"></div>
+<div class="element front"></div>
+</div>
+<div class="piece">
+<div class="element left"></div>
+<div class="element right"></div>
+<div class="element top"></div>
+<div class="element bottom"></div>
+<div class="element back"></div>
+<div class="element front"></div>
+</div>
+<div class="piece">
+<div class="element left"></div>
+<div class="element right"></div>
+<div class="element top"></div>
+<div class="element bottom"></div>
+<div class="element back"></div>
+<div class="element front"></div>
+</div>
+<div class="piece">
+<div class="element left"></div>
+<div class="element right"></div>
+<div class="element top"></div>
+<div class="element bottom"></div>
+<div class="element back"></div>
+<div class="element front"></div>
+</div>
+<div class="piece">
+<div class="element left"></div>
+<div class="element right"></div>
+<div class="element top"></div>
+<div class="element bottom"></div>
+<div class="element back"></div>
+<div class="element front"></div>
+</div>
+<div class="piece">
+<div class="element left"></div>
+<div class="element right"></div>
+<div class="element top"></div>
+<div class="element bottom"></div>
+<div class="element back"></div>
+<div class="element front"></div>
+</div>
+<div class="piece">
+<div class="element left"></div>
+<div class="element right"></div>
+<div class="element top"></div>
+<div class="element bottom"></div>
+<div class="element back"></div>
+<div class="element front"></div>
+</div>
+<div class="piece">
+<div class="element left"></div>
+<div class="element right"></div>
+<div class="element top"></div>
+<div class="element bottom"></div>
+<div class="element back"></div>
+<div class="element front"></div>
+</div>
+<div class="piece">
+<div class="element left"></div>
+<div class="element right"></div>
+<div class="element top"></div>
+<div class="element bottom"></div>
+<div class="element back"></div>
+<div class="element front"></div>
+</div>
+<div class="piece">
+<div class="element left"></div>
+<div class="element right"></div>
+<div class="element top"></div>
+<div class="element bottom"></div>
+<div class="element back"></div>
+<div class="element front"></div>
+</div>
+<div class="piece">
+<div class="element left"></div>
+<div class="element right"></div>
+<div class="element top"></div>
+<div class="element bottom"></div>
+<div class="element back"></div>
+<div class="element front"></div>
+</div>
+<div class="piece">
+<div class="element left"></div>
+<div class="element right"></div>
+<div class="element top"></div>
+<div class="element bottom"></div>
+<div class="element back"></div>
+<div class="element front"></div>
+</div>
+<div class="piece">
+<div class="element left"></div>
+<div class="element right"></div>
+<div class="element top"></div>
+<div class="element bottom"></div>
+<div class="element back"></div>
+<div class="element front"></div>
+</div>
+<div class="piece">
+<div class="element left"></div>
+<div class="element right"></div>
+<div class="element top"></div>
+<div class="element bottom"></div>
+<div class="element back"></div>
+<div class="element front"></div>
+</div>
+<div class="piece">
+<div class="element left"></div>
+<div class="element right"></div>
+<div class="element top"></div>
+<div class="element bottom"></div>
+<div class="element back"></div>
+<div class="element front"></div>
+</div>
+<div class="piece">
+<div class="element left"></div>
+<div class="element right"></div>
+<div class="element top"></div>
+<div class="element bottom"></div>
+<div class="element back"></div>
+<div class="element front"></div>
+</div>
+<div class="piece">
+<div class="element left"></div>
+<div class="element right"></div>
+<div class="element top"></div>
+<div class="element bottom"></div>
+<div class="element back"></div>
+<div class="element front"></div>
+</div>
+<div class="piece">
+<div class="element left"></div>
+<div class="element right"></div>
+<div class="element top"></div>
+<div class="element bottom"></div>
+<div class="element back"></div>
+<div class="element front"></div>
+</div>
+<div class="piece">
+<div class="element left"></div>
+<div class="element right"></div>
+<div class="element top"></div>
+<div class="element bottom"></div>
+<div class="element back"></div>
+<div class="element front"></div>
+</div>
+<div class="piece">
+<div class="element left"></div>
+<div class="element right"></div>
+<div class="element top"></div>
+<div class="element bottom"></div>
+<div class="element back"></div>
+<div class="element front"></div>
+</div>
+<div class="piece">
+<div class="element left"></div>
+<div class="element right"></div>
+<div class="element top"></div>
+<div class="element bottom"></div>
+<div class="element back"></div>
+<div class="element front"></div>
+</div>
+<div class="piece">
+<div class="element left"></div>
+<div class="element right"></div>
+<div class="element top"></div>
+<div class="element bottom"></div>
+<div class="element back"></div>
+<div class="element front"></div>
+</div>
+<div class="piece">
+<div class="element left"></div>
+<div class="element right"></div>
+<div class="element top"></div>
+<div class="element bottom"></div>
+<div class="element back"></div>
+<div class="element front"></div>
+</div>
+<div class="piece">
+<div class="element left"></div>
+<div class="element right"></div>
+<div class="element top"></div>
+<div class="element bottom"></div>
+<div class="element back"></div>
+<div class="element front"></div>
+</div>
+<div class="piece">
+<div class="element left"></div>
+<div class="element right"></div>
+<div class="element top"></div>
+<div class="element bottom"></div>
+<div class="element back"></div>
+<div class="element front"></div>
+</div>
+<div class="piece">
+<div class="element left"></div>
+<div class="element right"></div>
+<div class="element top"></div>
+<div class="element bottom"></div>
+<div class="element back"></div>
+<div class="element front"></div>
+</div>
+</div>
+</div>
+<div id="guide">
+<div class="anchor" id="anchor3" style="transform: translateZ(3px) translateY(-33.33%) rotate(-270deg) translateY(66.67%);"></div>
+<div class="anchor" id="anchor2" style="transform: translateZ(3px) translateY(-33.33%) rotate(-180deg) translateY(66.67%);"></div>
+<div class="anchor" id="anchor1" style="transform: translateZ(3px) translateY(-33.33%) rotate(-90deg) translateY(66.67%);"></div>
+<div class="anchor" id="anchor0" style="transform: translateZ(3px) translateY(-33.33%) rotate(0deg) translateY(66.67%);"></div>
+</div>
+
+	<div style="position:static;width:140px;height:40px;display:block;top:0px;left: 0;right: 0;margin: auto;text-align:center;clear:center;"> 
+		<div style="position:static;height:20px;width:140px;display:block;clear:both;top:0px;">
+		<button style="width:30px;
+		border-radius:         10px 10px 10px 10px;
+		-moz-border-radius:    10px 10px 10px 10px;
+		-webkit-border-radius: 10px 10px 10px 10px;
+		border: 0px solid #000000;
+		" onclick="executeCommandFirst()">&#9668;&#9668;</button><button style="width:20px;
+		border-radius:         10px 0px 0px 10px;
+		-moz-border-radius:    10px 0px 0px 10px;
+		-webkit-border-radius: 10px 0px 0px 10px;
+		border: 0px solid #000000;
+		"onclick="executeCommandBack()">&#9668;</button><button onclick="executeCommands(shuffle(26))" style="width:40px;
+		border-radius:         10px 10px 10px 10px;
+		-moz-border-radius:    10px 10px 10px 10px;
+		-webkit-border-radius: 10px 10px 10px 10px;
+		border: 0px solid #000000;
+		">&clubs;&hearts;&diams;&spades;</button><button onclick="executeCommandNext()" style="width:20px;
+		border-radius:         0px 10px 10px 0px;
+		-moz-border-radius:    0px 10px 10px 0px;
+		-webkit-border-radius: 0px 10px 10px 0px;
+		border: 0px solid #000000;
+		">&#9658;</button><button style="width:30px;
+		border-radius:         10px 10px 10px 10px;
+		-moz-border-radius:    10px 10px 10px 10px;
+		-webkit-border-radius: 10px 10px 10px 10px;
+		border: 0px solid #000000;
+		" onclick="executeCommandLast()">&#9658;&#9658;</button>
+		</div>
+		<div style="position:static;height:25px;width:140px;display:block;clear:both;top:0px;">
+		<button style="width:20px;
+		height:20px;
+		border-radius:         10px 10px 10px 10px;
+		-moz-border-radius:    10px 10px 10px 10px;
+		-webkit-border-radius: 10px 10px 10px 10px;
+		border: 0px solid #000000;
+		" onclick="resetCube()">&#8634;</button>
+		<button style="width:20px;
+		height:20px;
+		border-radius:         10px 10px 10px 10px;
+		-moz-border-radius:    10px 10px 10px 10px;
+		-webkit-border-radius: 10px 10px 10px 10px;
+		border: 0px solid #000000;
+		" onclick="solver()"><b>&sum;</b></button>
+		<button style="width:20px;
+		height:20px;
+		border-radius:         10px 10px 10px 10px;
+		-moz-border-radius:    10px 10px 10px 10px;
+		-webkit-border-radius: 10px 10px 10px 10px;
+		border: 0px solid #000000;
+		" onclick="configOpen()"><b>&lowast;</b></button>
+		</div>
+	</div>
+	<div style="position:static;width:60px;height:75px;display:block;left: 0;right: 0;float:left;text-align:left;padding: 0 0 0 0;margin-top:-40px"> 
+		<button style="width:20px;margin:0 0 0 0px;
+		border-radius:         10px 10px 10px 10px;
+		-moz-border-radius:    10px 10px 10px 10px;
+		-webkit-border-radius: 10px 10px 10px 10px;
+		border: 0px solid #000000;
+		" 
+		onclick="move3DViewIsometricTopFrontLeft()">&#9700;</button><button style="width:20px;margin:0 0 0 0px;
+		border-radius:         10px 10px 0px 0px;
+		-moz-border-radius:    10px 10px 0px 0px;
+		-webkit-border-radius: 10px 10px 0px 0px;
+		border: 0px solid #000000;
+		" 
+		onclick="move3DViewTop()">&#9650;</button><button style="width:20px;margin:0 0 0 0px;
+		border-radius:         10px 10px 10px 10px;
+		-moz-border-radius:    10px 10px 10px 10px;
+		-webkit-border-radius: 10px 10px 10px 10px;
+		border: 0px solid #000000;
+		" 
+		onclick="move3DViewIsometricTopFrontRight()">&#9701;</button><br>
+		<button style="width:20px;margin:0 0 0 0;
+		border-radius:         10px 0px 0px 10px;
+		-moz-border-radius:    10px 0px 0px 10px;
+		-webkit-border-radius: 10px 0px 0px 10px;
+		border: 0px solid #000000;
+		" 
+		onclick="move3DViewLeft()">&#9668;</button><button style="width:20px;margin:0 0 0 0px;
+		border-radius:         3px 3px 3px 3px;
+		-moz-border-radius:    3px 3px 3px 3px;
+		-webkit-border-radius: 3px 3px 3px 3px;
+		border: 0px solid #000000;
+		" 
+		onclick="move3DViewFront()">&#8718;</button><button style="width:20px;margin:0 0 0 0px;
+		border-radius:         0px 10px 10px 0px;
+		-moz-border-radius:    0px 10px 10px 0px;
+		-webkit-border-radius: 0px 10px 10px 0px;
+		border: 0px solid #000000;
+		" 
+		onclick="move3DViewRight()">&#9654;</button><br><button style="width:20px;margin:0 0 0 0;
+		border-radius:         10px 10px 10px 10px;
+		-moz-border-radius:    10px 10px 10px 10px;
+		-webkit-border-radius: 10px 10px 10px 10px;
+		border: 0px solid #000000;
+		" 
+		onclick="move3DViewIsometricDownFrontLeft()">&#9699;</button><button style="width:20px;margin:0 0 0 0;
+		border-radius:         0px 0px 5px 5px;
+		-moz-border-radius:    0px 0px 5px 5px;
+		-webkit-border-radius: 0px 0px 5px 5px;
+		border: 0px solid #000000;
+		" 
+		onclick="move3DViewBottom()">&#9660;</button><button style="width:20px;margin:0 0 0 0;
+		border-radius:         10px 10px 10px 10px;
+		-moz-border-radius:    10px 10px 10px 10px;
+		-webkit-border-radius: 10px 10px 10px 10px;
+		border: 0px solid #000000;
+		" 
+		onclick="move3DViewIsometricDownFrontRight()">&#9698;</button>
+		<br>
+		<button style="width:20px;margin:0 0 0 0px;
+		border-radius:         10px 10px 10px 10px;
+		-moz-border-radius:    10px 10px 10px 10px;
+		-webkit-border-radius: 10px 10px 10px 10px;
+		border: 0px solid #000000;
+		" 
+		onclick="move3DViewIsometricDownBackRight()">&#8665;</button><button style="width:20px;margin:0 0 0 0px;
+		border-radius:         0px 0px 10px 10px;
+		-moz-border-radius:    0px 0px 10px 10px;
+		-webkit-border-radius: 0px 0px 10px 10px;
+		border: 0px solid #000000;
+		" 
+		onclick="move3DViewBase()">&#9633;</button><button style="width:20px;margin:0 0 0 0px;
+		border-radius:         10px 10px 10px 10px;
+		-moz-border-radius:    10px 10px 10px 10px;
+		-webkit-border-radius: 10px 10px 10px 10px;
+		border: 0px solid #000000;
+		" 
+		onclick="move3DViewIsometricDownBackRight()">&#8664;</button>
+	</div>	
+
+	<div style="position:static;width:70px;height:200px;display:block;left: 0;right: 0;float:right;text-align:left;padding: 0 0 0 0;color:white;margin-top:-40px"> 
+		Comandos
+		<br>
+		<textarea id="command" style="height:70px;width:70px;"></textarea><br>
+		<button  style="width:30px;clear:both;float:right;
+		border-radius:         10px 10px 10px 10px;
+		-moz-border-radius:    10px 10px 10px 10px;
+		-webkit-border-radius: 10px 10px 10px 10px;
+		border: 0px solid #000000;
+		" onclick="executeCommands(document.getElementById('command').value)">&#10148;</button><br>
+
+	</div>
+	
+<script id="rendered-js">
+var colors = ['blue', 'green', 'white', 'yellow', 'orange', 'red'];
+
+//cw counterclockwise
+
+pieces = document.getElementsByClassName('piece');
+// Returns j-th adjacent face of i-th face
+function mx(i, j) {
+  return ([2, 4, 3, 5][j % 4 | 0] + i % 2 * ((j | 0) % 4 * 2 + 3) + 2 * (i / 2 | 0)) % 6;
+}
+
+function getAxis(face) {
+  return String.fromCharCode('X'.charCodeAt(0) + face / 2); // X, Y or Z
+}
+
+// Moves each of 26 pieces to their places, assigns IDs and attaches stickers
+function assembleCube(){
+  function moveto(face) {
+    id = id + (1 << face);
+    pieces[i].children[face].appendChild(document.createElement('div')).
+    setAttribute('class', 'sticker ' + colors[face]);
+    return 'translate' + getAxis(face) + '(' + (face % 2 * 4 - 2) + 'em)';
+  }
+  for (var id, x, i = 0; id = 0, i < 26; i++) {
+    x = mx(i, i % 18);
+    pieces[i].style.transform = 'rotateX(0deg)' + moveto(i % 6) + (
+    i > 5 ? moveto(x) + (i > 17 ? moveto(mx(x, x + 2)) : '') : '');
+    pieces[i].setAttribute('id', 'piece' + id);
+  }
+}
+// Swaps stickers of the face (by clockwise) stated times, thereby rotates the face
+function swapPieces(face, times) {
+  for (var i = 0; i < 6 * times; i++) {
+    var piece1 = getPieceBy(face, i / 2, i % 2),
+    piece2 = getPieceBy(face, i / 2 + 1, i % 2);
+    for (var j = 0; j < 5; j++) {
+      var sticker1 = piece1.children[j < 4 ? mx(face, j) : face].firstChild,
+      sticker2 = piece2.children[j < 4 ? mx(face, j + 1) : face].firstChild,
+      className = sticker1 ? sticker1.className : '';
+      if (className)
+      sticker1.className = sticker2.className,
+      sticker2.className = className;
+    }
+  }
+}
+
+
+
+
+
+
+
+var moviments=["B","F","U","D","R","L","B'","F'","U'","D'","R'","L'","B2","F2","U2","D2","R2","L2"]
+//var colors = ['blue', 'green', 'white', 'yellow', 'orange', 'red'];
+var faces =    ['left' ,'right', 'top'  , 'bottom'  , 'back', 'front'];
+var virtualCube={
+	'left':
+		[
+			['B','B','B'],
+			['B','B','B'],
+			['B','B','B']
+		],
+	'right':		
+		[
+			['G','G','G'],
+			['G','G','G'],
+			['G','G','G']
+		],
+	'top':
+		[
+			['W','W','W'],
+			['W','W','W'],
+			['W','W','W']
+		],
+	'bottom':
+		[
+			['Y','Y','Y'],
+			['Y','Y','Y'],
+			['Y','Y','Y']
+		],
+	'back':
+		[
+			['O','O','O'],
+			['O','O','O'],
+			['O','O','O']
+		],
+	'front':
+		[
+			['R','R','R'],
+			['R','R','R'],
+			['R','R','R']
+		],
+}
+
+var matrixLeft=[
+	[21,5,37],
+	[17,1,33],
+	[25,9,41]
+];
+var matrixRight=[
+	[38,6,22],
+	[34,2,18],
+	[42,10,26]
+];
+var matrixTop=[
+	[21,20,22],
+	[5,4,6],
+	[37,36,38]
+];
+var matrixBottom=[
+	[41,40,42],
+	[9,8,10],
+	[25,24,26],
+];
+var matrixBase=[
+	[25,24,26],
+	[17,16,18],
+	[21,20,22],
+];
+var matrixFront=[
+	[37,36,38],
+	[33,32,34],
+	[41,40,42]
+];
+var	matrixFaces=[matrixLeft, matrixRight, matrixTop, matrixBottom, matrixBase, matrixFront];
+
+
+var moved_ative=false;
+var commands_list=[];
+var position_commands_list=-1;
+
+function moveCube(face, cw, currentTime,lessHistory){
+  moveCubeVirtual(face, cw, currentTime);
+  document.getElementById("command").value+=getNameMoviment(face, cw);
+  document.getElementById("command").value=trimCommand(document.getElementById("command").value);
+  //document.getElementById("reverse").value=reverseCommand(document.getElementById("command").value); 
+  if(lessHistory===undefined)
+  if (position_commands_list==(commands_list.length-1)){
+  	commands_list.push(getNameMoviment(face, cw));
+	position_commands_list++;
+  }
+  else if (position_commands_list<(commands_list.length-1)){
+	while(position_commands_list<(commands_list.length-1)){
+		console.log(commands_list.pop());
+	}
+  	commands_list.push(getNameMoviment(face, cw));
+	position_commands_list++;
+  }
+  animateRotation(face, cw, currentTime)
+}
+function moveCubeVirtual(face, cw, currentTime){
+	console.log(faces[face]);
+	if (faces[face]=='left'){
+		for(y=0;y<3;y++){
+			virtualCube.top[y][1]=""
+		}
+	}
+	else if (faces[face]=='right'){
+	}
+	else if (faces[face]=='top'){
+	}
+	else if (faces[face]=='bottom'){
+	}
+	else if (faces[face]=='back'){
+	}
+	else if (faces[face]=='front'){
+	}
+	console.log(virtualCube)
+}
+function animateRotation(face, cw, currentTime) {
+  var k = .3 * (face % 2 * 2 - 1) * (2 * cw - 1),
+  qubes = Array(9).fill(pieces[face]).map(function (value, index) {
+    return index ? getPieceBy(face, index / 2, index % 2) : value;
+  });
+  (function rotatePieces() {
+    var passed = Date.now() - currentTime,
+    style = 'rotate' + getAxis(face) + '(' + k * passed * (passed < 300) + 'deg)';
+    qubes.forEach(function (piece) {
+		piece.style.transform = piece.style.transform.replace(/rotate.\(\S+\)/, style);
+    });
+    if (passed >= 300)
+    return swapPieces(face, 3 - 2 * cw);
+    requestAnimationFrame(rotatePieces);
+  })();
+}
+
+function resetCube() {
+  commands_list=[];
+  position_commands_list=-1;
+  //document.getElementById("reverse").value="";
+  document.getElementById("command").value="";
+  function moveto(face) {
+    id = id + (1 << face);
+    pieces[i].children[face].firstChild.setAttribute('class', 'sticker ' + colors[face]);
+    return 'translate' + getAxis(face) + '(' + (face % 2 * 4 - 2) + 'em)';
+  }
+  for (var id, x, i = 0; id = 0, i < 26; i++) {
+    x = mx(i, i % 18);
+    pieces[i].style.transform = 'rotateX(0deg)' + moveto(i % 6) + (
+    i > 5 ? moveto(x) + (i > 17 ? moveto(mx(x, x + 2)) : '') : '');
+  }
+  document.getElementById('pivot').style.transform= "rotateX(-45deg) rotateY(-45deg)"//isometric
+}
+function getPieceBy(face, index, corner) {
+  return document.getElementById('piece' + (
+  (1 << face) + (1 << mx(face, index)) + (1 << mx(face, index + 1)) * corner));
+}
+function getNameMoviment(face, cw){
+  return (cw)?moviments[face]:moviments[face]+"'";
+}
+function executeCommands(tcommand){
+	if (tcommand!=null && tcommand.length>0  && tcommand.length>0 && !(tcommand==undefined)){
+		moved_ative=true;
+		var i=0;
+		var x=1;
+		ttrim="";
+		face=""
+		cw=true;
+		while(true){
+		  acc1=(tcommand.length>=i+1)?tcommand.substring(i,i+1):"";
+		  acc2=(tcommand.length>=i+2)?tcommand.substring(i+1,i+2):"";
+		  acc3=(tcommand.length>=i+3)?tcommand.substring(i+2,i+3):"";
+		  if(acc2=="2"){
+			 face=moviments.indexOf(acc1);
+			 cw=(acc3!="'") 
+			 setTimeout("moveCube("+face+","+cw+",Date.now());",(x)*1000);
+			 x++;
+			 i++;
+		  }
+		  else{
+			face=moviments.indexOf(acc1);   
+			cw=(acc2!="'");
+		  }
+		  if (!cw)
+			i++;
+		  setTimeout("moveCube("+face+","+cw+",Date.now());",(x)*1000);
+		  x++;
+		  i++;
+		  if (i>=tcommand.length) break;
+		}
+		setTimeout("moved_ative=false;",x*1000);
+	}
+}
+function executeVirtualCommands(tcommand){
+	if (tcommand!=null && tcommand.length>0  && tcommand.length>0 && !(tcommand==undefined)){
+		moved_ative=true;
+		var i=0;
+		var x=1;
+		ttrim="";
+		face=""
+		cw=true;
+		while(true){
+		  acc1=(tcommand.length>=i+1)?tcommand.substring(i,i+1):"";
+		  acc2=(tcommand.length>=i+2)?tcommand.substring(i+1,i+2):"";
+		  acc3=(tcommand.length>=i+3)?tcommand.substring(i+2,i+3):"";
+		  if(acc2=="2"){
+			 face=moviments.indexOf(acc1);
+			 cw=(acc3!="'") 
+			 moveCubeVirtual(face,cw);
+			 x++;
+			 i++;
+		  }
+		  else{
+			face=moviments.indexOf(acc1);   
+			cw=(acc2!="'");
+		  }
+		  if (!cw)
+			i++;
+		  moveCubeVirtual(face,cw);
+		  x++;
+		  i++;
+		  if (i>=tcommand.length) break;
+		}
+		moved_ative=false;
+	}
+}
+function executeCommand(tcommand,lessHistory){
+  if (tcommand!=null && tcommand.length>0  && tcommand.length>0 && !(tcommand==undefined)){
+    ttrim="";
+    face=""
+    cw=true;
+    i=0;
+    acc1=(tcommand.length>=i+1)?tcommand.substring(i,i+1):"";
+    acc2=(tcommand.length>=i+2)?tcommand.substring(i+1,i+2):"";
+    acc3=(tcommand.length>=i+3)?tcommand.substring(i+2,i+3):"";
+      if(acc2=="2"){
+         face=moviments.indexOf(acc1);
+         cw=(acc3!="'") 
+         moveCube(face,cw,Date.now());
+         x++;
+         i++;
+      }
+      else{
+        face=moviments.indexOf(acc1);   
+        cw=(acc2!="'");
+      }
+      if (!cw)
+        i++;
+      moveCube(face,cw,Date.now(),lessHistory);
+  }
+}
+function executeCommandBack(){
+   if (!moved_ative)
+   if (position_commands_list>=0){
+	moved_ative=true;
+        position_commands_list--;
+        executeCommand(reverseCommand(commands_list[position_commands_list+1]),lessHistory=true);
+	setTimeout("moved_ative=false;",1000);
+  }
+}
+function executeCommandNext(){
+  if (!moved_ative)
+  if (position_commands_list<commands_list.length-1){
+	moved_ative=true;
+	position_commands_list++;
+        executeCommand(commands_list[position_commands_list],lessHistory=true);
+        setTimeout("moved_ative=false;",1000);
+  }
+}
+function executeCommandFirst(){
+  if (!moved_ative){
+    moved_ative=true;
+    x=0;
+    while (true){ 
+      if (position_commands_list>=0){
+        
+        position_commands_list--;
+        setTimeout("executeCommand(reverseCommand(commands_list["+(position_commands_list+1)+"]+''),lessHistory=true);",(x)*1000);
+        x++;
+      }
+      else break;
+    }
+    setTimeout("moved_ative=false;",x*1000);
+  }
+}
+function executeCommandLast(){
+  if (!moved_ative){
+    moved_ative=true;
+    x=0;
+    while (true){ 
+      if (position_commands_list<commands_list.length-1){
+        x++;
+        position_commands_list++;
+        setTimeout("executeCommand(commands_list["+position_commands_list+"],lessHistory=true);",(x)*1000);
+      }
+      else break;
+    }
+    setTimeout("moved_ative=false;",x*1000);
+  }
+}
+function getRandomInt(min, max) {
+  min = Math.ceil(min);
+  max = Math.floor(max);
+  return Math.floor(Math.random() * (max - min)) + min;
+}
+
+function reverseCommand(tcommand){
+  treverse="";
+  if (tcommand!=null){
+    var i=tcommand.length;
+    treverse="";
+    while(true){
+      acc1=(0<=i-1)?tcommand.substring(i-1,i):"";
+      acc2=(0<=i-2)?tcommand.substring(i-1,i-2):"";
+      if (acc2=="2"){
+        acc1="2"+acc1;
+        i--;
+      }
+      else if(acc1=="'"){ 
+	  acc1=acc2;
+          i--;
+      }
+      else if(acc1!=""){
+        acc1=acc1+"'";
+      }
+      treverse+=acc1;
+      i--;
+      if (i<=0) break;
+    }
+  }
+  return treverse;
+  
+}
+function move3DViewTop(){
+	document.getElementById('pivot').style.transform= "rotateX(0deg) rotateY(0deg)"//Front Red
+	document.getElementById('pivot').style.transform= "rotateX(-90deg) rotateY(0deg)"//Top White
+} 
+function move3DViewBottom(){
+	document.getElementById('pivot').style.transform= "rotateX(0deg) rotateY(0deg)"//Front Red
+	document.getElementById('pivot').style.transform= "rotateX(90deg) rotateY(0deg)"//Bottom Yellow
+} 
+function move3DViewFront(){
+  document.getElementById('pivot').style.transform= "rotateX(0deg) rotateY(0deg)"//Front Red
+} 
+function move3DViewBase(){
+	document.getElementById('pivot').style.transform= "rotateX(0deg) rotateY(0deg)"//Front Red
+	document.getElementById('pivot').style.transform= "rotateX(180deg) rotateY(0deg)"//Base Orange
+} 
+function move3DViewLeft(){
+	document.getElementById('pivot').style.transform= "rotateX(0deg) rotateY(90deg)"//Left Blue
+} 
+function move3DViewRight(){
+	document.getElementById('pivot').style.transform= "rotateX(0deg) rotateY(-90deg)"//Right Green	
+} 
+function move3DViewIsometricTopFrontRight(){
+	document.getElementById('pivot').style.transform= "rotateX(-45deg) rotateY(-45deg)"//Right Green	
+} 
+
+function move3DViewIsometricTopFrontLeft(){
+	document.getElementById('pivot').style.transform= "rotateX(-45deg) rotateY(45deg)"//Right Green	
+} 
+function move3DViewIsometricDownFrontRight(){
+	document.getElementById('pivot').style.transform= "rotateX(45deg) rotateY(-45deg)"//Right Green	
+} 
+
+function move3DViewIsometricDownFrontLeft(){
+	document.getElementById('pivot').style.transform= "rotateX(45deg) rotateY(45deg)"//Right Green	
+} 
+function move3DViewIsometricDownBackRight(){
+	document.getElementById('pivot').style.transform= "rotateX(135deg) rotateY(-45deg)"//Right Green	
+} 
+function move3DViewIsometricTopBackRight(){
+	document.getElementById('pivot').style.transform= "rotateX(-135deg) rotateY(-45deg)"//Right Green	
+} 
+
+
+
+
+function shuffle(x){
+  t_commands="";
+  if (!moved_ative){
+    for (i=0;i<x;i++){
+		var face=getRandomInt(0,5);
+		var cw =(getRandomInt(0,2)==1);
+		t_commands=t_commands+getNameMoviment(face,cw);
+		if(t_commands.length != trimCommand(t_commands).length){
+			t_commands=trimCommand(t_commands);
+			x++;
+		}
+	}
+  }
+  return t_commands;
+}
+
+function trimCommand(tcommand){  
+  var i=0;
+  ttrim="";
+  if (tcommand!=null)
+  while(true){
+    acc1=(tcommand.length>=i+1)?tcommand.substring(i,i+1):"";
+    acc2=(tcommand.length>=i+2)?tcommand.substring(i+1,i+2):"";
+    acc3=(tcommand.length>=i+3)?tcommand.substring(i+2,i+3):"";
+    acc4=(tcommand.length>=i+4)?tcommand.substring(i+3,i+4):"";
+    acc5=(tcommand.length>=i+5)?tcommand.substring(i+4,i+5):"";
+    acc6=(tcommand.length>=i+6)?tcommand.substring(i+5,i+6):"";
+    acc7=(tcommand.length>=i+7)?tcommand.substring(i+6,i+7):"";
+    acc8=(tcommand.length>=i+8)?tcommand.substring(i+7,i+8):"";
+    acc9=(tcommand.length>=i+9)?tcommand.substring(i+8,i+9):"";
+   
+   if((acc2=="2")&&(acc2==acc3)&&(acc3!="'")&&(acc4!=acc2)){//U2U 180
+      acc1=acc2+"'";
+      i=i+3;
+    } 
+   if((acc2=="2")&&(acc1==acc3)&&(acc4=="'")){//U2U' anula horário
+      acc1=acc1;
+      i=i+3;
+    }  
+   else if((acc1==acc3)&&(acc3==acc5)&&(acc5==acc7)&&(acc2==acc4)&&(acc4==acc6)&&(acc6==acc8)&&(acc8=="'")&&(acc1!="")){//UUUU 360
+      acc1="";
+      i=i+7;
+    } 
+    else if((acc1==acc2)&&(acc2==acc3)&&(acc3==acc4)&&(acc5!="'")&&(acc5!=acc1)&&(acc1!="")){//UUUU anulati horário
+      acc1="";
+      i=i+5;
+    } 
+    else if((acc1==acc3)&&(acc3==acc5)&&(acc2==acc4)&&(acc4==acc6)&&(acc2=="'")&&(acc7!=acc1)&&(acc1!="")){//U'U'U' iverter anti horário
+      i=i+5;
+    }
+    else if((acc1==acc2)&&(acc2==acc3)&&(acc4!="'")&&(acc1!="")&&(acc1!="")&&(acc1!="")){//UUU  inverter horario
+      acc1=acc1+"'";
+      i=i+2;
+    }
+    else if((((acc1==acc2)&&(acc3=="'"))||((acc1==acc3)&&(acc2=="'")))&&(acc4!="'")&&(acc4!=acc1)&&(acc1!="")){//UU' U'U = ""  anula
+      acc1="";
+      i=i+3;
+    }
+    else if((acc1==acc3)&&(acc2==acc4)&&(acc2=="'")&&(acc1!="")){//U'U' = 2U duplo
+      acc1+="2";
+      i=i+4;
+    }
+    else if((acc1==acc2)&&(acc3!="'")&&(acc3!=acc2)){//UU = 2U     duplo 
+      acc1=acc1+"2";
+      i=i+1;
+    }
+    ttrim+=acc1;
+    i++;
+    if (i>=tcommand.length) break;
+  }
+  return ttrim;
+  //return tcommand;
+}
+
+function colorsFace(face){
+	matrix=virtualCube.getAtribute(faces[face]);
+	return matrix;
+}
+
+function rotate_degree(id) {
+	obj= window.getComputedStyle(document.getElementById(id), null);
+	rotateX = 0,
+	rotateY = 0,
+	rotateZ = 0;
+	
+    var matrix = obj.getPropertyValue("-webkit-transform") ||
+    obj.getPropertyValue("-moz-transform")    ||
+    obj.getPropertyValue("-ms-transform")     ||
+    obj.getPropertyValue("-o-transform")      ||
+    obj.getPropertyValue("transform");
+    if(matrix !== 'none') {
+          var values = matrix.split('(')[1].split(')')[0].split(','),
+            pi = Math.PI,
+            sinB = parseFloat(values[8]),
+            b = (Math.asin(sinB) * 180 / pi),
+            cosB = Math.cos(b * pi / 180),
+            matrixVal10 = parseFloat(values[9]),
+            a = (Math.asin(-matrixVal10 / cosB) * 180 / pi),
+            matrixVal1 = parseFloat(values[0]),
+            c = (Math.acos(matrixVal1 / cosB) * 180 / pi);
+
+        rotateX = a;
+        rotateY = b;
+        rotateZ = c;
+    } 
+    return {
+        rotateX: rotateX,
+        rotateY: rotateY,
+        rotateZ: rotateZ
+    };
+}
+//####################################################################### GENETIC ALGORITIM ######################################################################################################
+function countColorsRight(){
+	result=0;
+	for(z=0;z<faces.length;z++){
+		colorsFace(z).forEach(
+			function(line){
+				line[0].forEach(
+					function(color){
+						if(color==colors[z]){
+							result++;
+						}
+					}
+				);
+			}
+		);
+	}
+	//6 pieces fixed center
+	//54 all faces expost
+	//54-6=48 faces moved
+	return (result-6)/48;
+}
+function generatePopulation(limitLength,chromosomesLength){
+	var population=[];
+	for(count_=0;count_<limitLength;count_++){
+		population.push(shuffle(chromosomesLength));
+	}
+	return population;
+}
+function fitness_select(firstCommands,population,porcent){
+	for (count_population=0;count_population<population.length;count_population++){
+		executeVirtualCommands(population[count_population]);
+		console.log(Math.round(countColorsRight()*100)+"%");
+		resetCube();
+		executeCommandsFast(firstCommands);
+	}
+}
+function getCromosomes(Individual){
+	var cromosomes=[];
+	var i=0;
+	while(true){
+	  acc1=(Individual.length>=i+1)?Individual.substring(i,i+1):"";
+	  acc2=(Individual.length>=i+2)?Individual.substring(i+1,i+2):"";
+	  acc3=(Individual.length>=i+3)?Individual.substring(i+2,i+3):"";
+		if((acc1=="2")&&(acc3=="'")){
+			cromosome=acc1+acc2+acc3;
+			 i=i+2;
+		}
+		else if ((acc1=="2")&&(acc3!="'")){
+			cromosome=acc1+acc2;
+			i++;
+		}
+		else if ((acc1!="2")&&(acc2=="'")){
+			cromosome=acc1+acc2;
+			i++;
+		}
+		else if ((acc1!="2")&&(acc2!="'")){
+			cromosome=acc1;
+		}
+		else if (acc1!="'"){
+			i++;
+		}
+		cromosomes.push(cromosome);
+		i++;
+		if (i>=Individual.length) break;
+	}
+	return cromosomes;
+}
+function solver(){
+	//executeCommands(reverseCommand(document.getElementById('command').value))
+	//console.log(countColorsRight());
+	//console.log("BFB'F'U2RD'R'2FU'DBUB'R'U'RDRDFU");
+	//console.log(getCromosomes("BFB'F'U2RD'R'2FU'DBUB'R'U'RDRDFU"));
+	var population=generatePopulation(document.getElementsByName("population_first")[0].value,document.getElementsByName("comosomes")[0].value);
+	fitness_select(document.getElementById("command").value,population,document.getElementsByName("cross_over").value,1);
+	//cross_over(population,document.getElementsByName("cross_over").value)
+	//mutation(populacao,%)	
+}
+function configOpen(){
+	document.getElementById('config').style.display="block"
+}
+function configClose(){
+	document.getElementById('config').style.display="none"
+}
+
+//####################################################################### GENETIC ALGORITIM ######################################################################################################
+// Events
+var isTouchDevice = 'ontouchstart' in document.documentElement;
+function mousedown(md_e) {
+  var startXY = pivot.style.transform.match(/-?\d+\.?\d*/g).map(Number),
+  element = md_e.target.closest('.element'),
+  face = [].indexOf.call((element || cube).parentNode.children, element);
+
+  function mousemove(mm_e) {
+	var mm_e_pageX=0;
+	var mm_e_pageY=0;
+	var md_e_pageX=0;
+	var md_e_pageY=0;
+	if (isTouchDevice)  {
+		mm_e_pageX=mm_e.touches[0].pageX;
+		mm_e_pageY=mm_e.touches[0].pageY;
+		
+		md_e_pageX=md_e.touches[0].pageX;
+		md_e_pageY=md_e.touches[0].pageY;
+	}
+	else{
+		mm_e_pageX=mm_e.pageX
+		mm_e_pageY=mm_e.pageY
+		
+		md_e_pageX=md_e.pageX
+		md_e_pageY=md_e.pageY
+	}
+    if (element) {
+      var gid = /\d/.exec(document.elementFromPoint(mm_e_pageX, mm_e_pageY).id);
+      if (gid && gid.input.includes('anchor')) {
+        mouseup();
+        var e = element.parentNode.children[mx(face, Number(gid) + 3)].hasChildNodes();
+        moveCube(mx(face, Number(gid) + 1 + 2 * e), e, Date.now());
+      }
+    } else if(md_e.target.id=="scene")
+	     pivot.style.transform =
+	    'rotateX(' + (startXY[0] - (mm_e_pageY - md_e_pageY) / 2) + 'deg)' 
+ 	    +'rotateY(' + (startXY[1] + (mm_e_pageX - md_e_pageX) / 2) + 'deg)';
+  }
+  function mouseup() {
+    document.body.appendChild(guide);
+    scene.removeEventListener('mousemove', mousemove);
+    document.removeEventListener('mouseup', mouseup);
+    scene.addEventListener('mousedown', mousedown);
+
+    if (isTouchDevice)  {scene.removeEventListener('touchmove', mousemove);}
+    if (isTouchDevice)  {document.removeEventListener('touchend', mouseup);}
+    if (isTouchDevice)  {scene.addEventListener('touchstart', mousedown);}
+  }
+
+  (element || document.body).appendChild(guide);
+  scene.addEventListener('mousemove', mousemove);
+  document.addEventListener('mouseup', mouseup);
+  scene.removeEventListener('mousedown', mousedown);
+
+  if (isTouchDevice)  {scene.addEventListener('touchmove', mousemove);}
+  if (isTouchDevice)  {document.addEventListener('touchend', mouseup);}
+  if (isTouchDevice)  {scene.removeEventListener('touchstart', mousedown);}
+}
+
+
+document.ondragstart = function () {return false;};
+window.addEventListener('load', assembleCube);
+scene.addEventListener('mousedown', mousedown);
+if (isTouchDevice)  {
+	scene.addEventListener('touchstart', mousedown)
+};
+</script>
+</body>
+</html>
