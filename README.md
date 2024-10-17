@@ -1,6 +1,8 @@
 # ANALISE-DE-ALGORITIMO-GENETICO-USANDO-TECNOLOGIA-WEBASSEMBLY-PARA-SOLUCAO-DO-CUBO-DE-RUBIK
 ANALISE DE ALGORÍTIMO GENÉTICO  USANDO TÉCNOLOGIA WEBASSEMBLY PARA SOLUÇÃO DO CUBO DE RUBIK.
 
+demo
+https://luiz0067yahoo.github.io/rubik/
 
 Foi possivel establecer a ligação do Java Script com o Código C compilado desta forma
 
